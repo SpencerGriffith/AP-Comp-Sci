@@ -7,98 +7,105 @@
  */
 import java.awt.geom.*;     // for Point2D.Double
 import java.util.ArrayList; // for ArrayList
-//import gpdraw.*;            // for DrawingTool
-import java.awt.geom.Line2D; // for Line2D
-import java.io.*;
+import gpdraw.*;            // for DrawingTool
 
-public class IrregularPolygon{
-    private ArrayList <Point2D.Double> myPolygon;
-    private int numPoint=0;
-
+public class IrregularPolygon
+{
+    private ArrayList<Point2D.Double> myPolygon;
+    private SketchPad myPaper;
+    private DrawingTool myPencil;
     // constructors
-    public IrregularPolygon() { 
-
+    public IrregularPolygon()
+    {
+        myPolygon = new ArrayList<Point2D.Double>();
+        myPaper = new SketchPad(500,500);
+        myPencil = new DrawingTool(myPaper);
     }
 
-    public static void main() {
-        String line = null;
-        String fileName = "coords.txt";        
-        IrregularPolygon polygon = new IrregularPolygon();
-        try {
-            FileReader fileReader = new FileReader(fileName);
-            BufferedReader bufferedReader = new BufferedReader(fileReader);
-            bufferedReader.readLine();
-
-            while((line = bufferedReader.readLine()) != null) {
-                double x= Double.valueOf(line.substring(0,line.indexOf(",")));
-                double y= Double.valueOf(line.substring(line.indexOf(",")+1));
-                Point2D.Double aPoint = new Point2D.Double(x,y);
-                polygon.add(aPoint);
-            }   
-
-        }
-        catch(FileNotFoundException ex) {
-            System.out.println(
-                "Unable to open file '" + 
-                fileName + "'");                
-        }
-        catch(IOException ex) {
-            System.out.println(
-                "Error reading file '" 
-                + fileName + "'");                  
-
-        }
-    }
     // public methods
-    public void add(Point2D.Double aPoint) { 
+    public void add(Point2D.Double aPoint)
+    {
         myPolygon.add(aPoint);
-        numPoint++;
     }
 
-    public void draw() { 
+    public void draw()
+    {
+        double x1 = 0;
+        double y1 = 0;
+        double x2 = 0;
+        double y2 = 0;
+        for(int i=0; i<myPolygon.size(); i++)
+        {
 
+            x1 = myPolygon.get(i).getX();
+            y1 = myPolygon.get(i).getY();
+            x2 = myPolygon.get(i+1).getX();
+            y2 = myPolygon.get(i+1).getY();
+
+            myPencil.up();
+            myPencil.move(x1,y1);
+            myPencil.down();
+            myPencil.move(x2,y2);
+        }
     }
 
-    public double perimeter() { 
-        double perimeter = 0.0;
-        if (myPolygon.size() > 0) {
-            for (int pos = 0; pos < myPolygon.size(); pos++)
-            {
-                Point2D.Double myPoint  = (Point2D.Double)myPolygon.get(pos);
-                Point2D.Double nextPoint = (Point2D.Double)myPolygon.get((pos + 1) % myPolygon.size());
-                double x = nextPoint.getX() - myPoint.getX();
-                double y = nextPoint.getY() - myPoint.getY();
-                perimeter += Math.sqrt( Math.pow(x, 2) + Math.pow(y, 2));
-            }
+    public double perimeter()
+    {
+        double perimeter = 0;
+        double x1 = 0;
+        double y1 = 0;
+        double x2 = 0;
+        double y2 = 0;
+        double distance = 0;
+        for(int i=0; i<myPolygon.size(); i++)
+        {
+            x1 = myPolygon.get(i).getX();
+            y1 = myPolygon.get(i).getY();
+            x2 = myPolygon.get(i+1).getX();
+            y2 = myPolygon.get(i+1).getY();
+
+            distance = Math.sqrt(Math.pow(x1-x2,2)+Math.pow(y1-y2,2));
+            perimeter += distance;
         }
         return perimeter;
     }
 
-    public double area() { 
-        double area=0;
-        double total=0;
-        int xPos, yPos;
-        double myX, myY;
-        for (xPos = 0, yPos = 1; xPos < (myPolygon.size() - 1) && yPos < myPolygon.size(); xPos ++, yPos ++)
-        {
-            myX = ((Point2D.Double)(myPolygon.get(xPos))).getX();
-            myY = ((Point2D.Double)(myPolygon.get(yPos))).getY();
-            total += myX * myY;
-        }
-        total += ((( Point2D.Double )(myPolygon.get(myPolygon.size() - 1))).getX()) * 
-        ((( Point2D.Double )(myPolygon.get(0))).getY() );
+    public double area()
+    {
+        double x = 0;
+        double y = 0;
+        double x0 = 0;
+        double y1 = 0;
+        double y0 = 0;
+        double x1 = 0;
+        for(int i=0; i<myPolygon.size(); i++)
+        {            
+            x0 = myPolygon.get(i).getX();
+            y1 = myPolygon.get(i+1).getY();
+            y0 = myPolygon.get(i).getY();
+            x1 = myPolygon.get(i+1).getX();
+            x += x0*y1;
+            y += y0*x1;            
 
-        for (yPos = 0, xPos = 1; yPos < (myPolygon.size() - 1) && xPos < myPolygon.size(); xPos ++, yPos ++)
-        {
-            myX = ((Point2D.Double)(myPolygon.get(xPos))).getX();
-            myY = ((Point2D.Double)(myPolygon.get(yPos))).getY();
-            total -= myX * myY;
         }
-        total -= ((( Point2D.Double )(myPolygon.get(myPolygon.size() - 1))).getY() ) * 
-        ((( Point2D.Double )(myPolygon.get(0))).getX() );
-        area = total / 2;    
-        return Math.abs(area);
+        return Math.abs((x-y)/2);
     }
 
+    public static void main()
+    {
+        IrregularPolygon polygon = new IrregularPolygon();
+        Point2D.Double pt1 = new Point2D.Double((double)20,(double)10);
+        Point2D.Double pt2 = new Point2D.Double((double)70,(double)20);
+        Point2D.Double pt3 = new Point2D.Double((double)50,(double)50);
+        Point2D.Double pt4 = new Point2D.Double((double)0,(double)40);
+        polygon.add(pt1);
+        polygon.add(pt2);
+        polygon.add(pt3);
+        polygon.add(pt4);
+
+        polygon.draw();
+        System.out.println("The perimeter is: "+polygon.perimeter());
+        System.out.println("The area is: "+polygon.area());
+    }
 }
 
